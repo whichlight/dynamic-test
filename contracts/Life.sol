@@ -40,35 +40,8 @@ contract Life {
         return sha256(abi.encodePacked(input));
     }
 
-    function getLiveNeighborCount(bool[8] neighbors) private view returns (uint8) {
-        uint8 liveNeighbors = 0;
 
-        for (uint8 i = 0; i < neighbors.length; i++) {
-            if (neighbors[i]) {
-                liveNeighbors++;
-            }
-        }
-
-        return liveNeighbors;
-    }
- 
-    function calculateLife(bool[8] neighbors, bool alive) private view returns(bool) {
-        uint8 liveNeighborCount = getLiveNeighborCount(neighbors);
-
-        // Any live cell with 2 or 3 live neighbors survives.
-        if (alive) {
-            if (liveNeighborCount == 2 || liveNeighborCount == 3) {
-                return true;
-            }
-            // Any dead cell with 3 live neighbors becomes a live cell.
-        } else if (liveNeighborCount == 3) {
-            return true;
-        }
-
-        // All other live cells die in the next generation.
-        // All other dead cells stay dead.
-        return false;
-    }
+    // Conway stuff
 
     function wrapAround(uint64 index) private view returns (uint64) {
         if (index < 0) {
@@ -81,7 +54,6 @@ contract Life {
 
         return index;
     }
-
 
     function rowAbove(uint64 index) private view returns(bool) {
         return wrapAround(index + BOARD_SIZE);
@@ -99,7 +71,6 @@ contract Life {
         return wrapAround(index - 1);
     }
 
-
     function getNeighbors(bool[KEY_LENGTH] board, uint256 index) private view returns (bool[8]) {
         return [
             board[rowAbove(index)], // top
@@ -113,6 +84,35 @@ contract Life {
         ];
     }
 
+    function getLiveNeighborCount(bool[8] neighbors) private view returns (uint8) {
+        uint8 liveNeighbors = 0;
+
+        for (uint8 i = 0; i < neighbors.length; i++) {
+            if (neighbors[i]) {
+                liveNeighbors++;
+            }
+        }
+
+        return liveNeighbors;
+    }
+
+    function calculateLife(bool[8] neighbors, bool alive) private view returns(bool) {
+        uint8 liveNeighborCount = getLiveNeighborCount(neighbors);
+
+        // Any live cell with 2 or 3 live neighbors survives.
+        if (alive) {
+            if (liveNeighborCount == 2 || liveNeighborCount == 3) {
+                return true;
+            }
+            // Any dead cell with 3 live neighbors becomes a live cell.
+        } else if (liveNeighborCount == 3) {
+            return true;
+        }
+
+        // All other live cells die in the next generation.
+        // All other dead cells stay dead.
+        return false;
+    }
 
     function calculateNextState(bool[KEY_LENGTH] board) public view returns(bool[KEY_LENGTH]) {
         bool[KEY_LENGTH] newBoard;
