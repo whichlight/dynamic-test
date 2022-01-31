@@ -7,7 +7,8 @@ contract Life {
     // https://solidity-by-example.org/hacks/block-timestamp-manipulation/
     // this is a vulnerability 
     uint256 public bornTime;
-    uint8 BOARD_SIZE = 64;
+    uint8 public BOARD_SIZE = 64;
+    uint64 public KEY_LENGTH = BOARD_SIZE ** 2;
 
     constructor() {
         bornTime = block.timestamp; 
@@ -39,13 +40,14 @@ contract Life {
         return sha256(abi.encodePacked(input));
     }
 
-    function getLiveNeighborCount() {
+    function getLiveNeighborCount(bool[9] neighbors) public view returns (uint8) {
+        // TODO: Implement this
         return 3;
     }
  
     function calculateLife(bool[9] neighbors) public view returns(bool) {
-        bool memory alive = neighbors[4];
-        uint8 liveNeighborCount = getLiveNeighborCount();
+        bool alive = neighbors[4];
+        uint8 liveNeighborCount = getLiveNeighborCount(neighbors);
 
         // Any live cell with 2 or 3 live neighbors survives.
         if (alive) {
@@ -64,35 +66,35 @@ contract Life {
 
     function wrapAround(uint64 index) public view returns (uint64) {
         if (index < 0) {
-            return index + 4096;
+            return index + KEY_LENGTH;
         }
 
-        if (index >= 4096) {
-            return index - 4096;
+        if (index >= KEY_LENGTH) {
+            return index - KEY_LENGTH;
         }
 
         return index;
     }
 
 
-    function rowAbove(uint64 index) returns(bool) {
+    function rowAbove(uint64 index) public view returns(bool) {
         return wrapAround(index + BOARD_SIZE);
     }
 
-    function rowBelow(uint64 index) returns(bool) {
+    function rowBelow(uint64 index) public view returns(bool) {
         return wrapAround(index - BOARD_SIZE);
     }
 
-    function colRight(uint64 index) returns(bool) {
+    function colRight(uint64 index) public view returns(bool) {
         return wrapAround(index + 1);
     }
 
-    function colLeft(uint64 index) returns(bool) {
+    function colLeft(uint64 index) public view returns(bool) {
         return wrapAround(index - 1);
     }
 
 
-    function getNeighbors(bool[4096] board, uint256 index) returns (bool[9]) {
+    function getNeighbors(bool[KEY_LENGTH] board, uint256 index) public view returns (bool[9]) {
         return [
             board[rowAbove(index)], // top
             board[rowAbove(colRight(index))], // top right
@@ -106,10 +108,10 @@ contract Life {
     }
 
 
-    function calculateNextState(bool[4096] board) public view returns(bool[4096]) {
-        bool[4096] newBoard;
+    function calculateNextState(bool[KEY_LENGTH] board) public view returns(bool[KEY_LENGTH]) {
+        bool[KEY_LENGTH] newBoard;
 
-        for (uint256 i = 0; i < 4096; i++) {
+        for (uint256 i = 0; i < KEY_LENGTH; i++) {
             bool[9] neighbors = getNeighbors(board, i);
             newBoard[i] = calculateLife(neighbors, board[i]);
         }   
