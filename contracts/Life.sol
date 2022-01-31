@@ -40,10 +40,10 @@ contract Life {
         return sha256(abi.encodePacked(input));
     }
 
-    function getLiveNeighborCount(bool[8] neighbors) public view returns (uint8) {
+    function getLiveNeighborCount(bool[8] neighbors) private view returns (uint8) {
         uint8 liveNeighbors = 0;
 
-        for (uint256 i = 0; i < neighbors.length; i++) {
+        for (uint8 i = 0; i < neighbors.length; i++) {
             if (neighbors[i]) {
                 liveNeighbors++;
             }
@@ -52,7 +52,7 @@ contract Life {
         return liveNeighbors;
     }
  
-    function calculateLife(bool[8] neighbors, bool alive) public view returns(bool) {
+    function calculateLife(bool[8] neighbors, bool alive) private view returns(bool) {
         uint8 liveNeighborCount = getLiveNeighborCount(neighbors);
 
         // Any live cell with 2 or 3 live neighbors survives.
@@ -70,7 +70,7 @@ contract Life {
         return false;
     }
 
-    function wrapAround(uint64 index) public view returns (uint64) {
+    function wrapAround(uint64 index) private view returns (uint64) {
         if (index < 0) {
             return index + KEY_LENGTH;
         }
@@ -83,24 +83,24 @@ contract Life {
     }
 
 
-    function rowAbove(uint64 index) public view returns(bool) {
+    function rowAbove(uint64 index) private view returns(bool) {
         return wrapAround(index + BOARD_SIZE);
     }
 
-    function rowBelow(uint64 index) public view returns(bool) {
+    function rowBelow(uint64 index) private view returns(bool) {
         return wrapAround(index - BOARD_SIZE);
     }
 
-    function colRight(uint64 index) public view returns(bool) {
+    function colRight(uint64 index) private view returns(bool) {
         return wrapAround(index + 1);
     }
 
-    function colLeft(uint64 index) public view returns(bool) {
+    function colLeft(uint64 index) private view returns(bool) {
         return wrapAround(index - 1);
     }
 
 
-    function getNeighbors(bool[KEY_LENGTH] board, uint256 index) public view returns (bool[8]) {
+    function getNeighbors(bool[KEY_LENGTH] board, uint256 index) private view returns (bool[8]) {
         return [
             board[rowAbove(index)], // top
             board[rowAbove(colRight(index))], // top right
