@@ -40,13 +40,19 @@ contract Life {
         return sha256(abi.encodePacked(input));
     }
 
-    function getLiveNeighborCount(bool[9] neighbors) public view returns (uint8) {
-        // TODO: Implement this
-        return 3;
+    function getLiveNeighborCount(bool[8] neighbors) public view returns (uint8) {
+        uint8 liveNeighbors = 0;
+
+        for (uint256 i = 0; i < neighbors.length; i++) {
+            if (neighbors[i]) {
+                liveNeighbors++;
+            }
+        }
+
+        return liveNeighbors;
     }
  
-    function calculateLife(bool[9] neighbors) public view returns(bool) {
-        bool alive = neighbors[4];
+    function calculateLife(bool[8] neighbors, bool alive) public view returns(bool) {
         uint8 liveNeighborCount = getLiveNeighborCount(neighbors);
 
         // Any live cell with 2 or 3 live neighbors survives.
@@ -94,7 +100,7 @@ contract Life {
     }
 
 
-    function getNeighbors(bool[KEY_LENGTH] board, uint256 index) public view returns (bool[9]) {
+    function getNeighbors(bool[KEY_LENGTH] board, uint256 index) public view returns (bool[8]) {
         return [
             board[rowAbove(index)], // top
             board[rowAbove(colRight(index))], // top right
@@ -112,9 +118,9 @@ contract Life {
         bool[KEY_LENGTH] newBoard;
 
         for (uint256 i = 0; i < KEY_LENGTH; i++) {
-            bool[9] neighbors = getNeighbors(board, i);
+            bool[8] neighbors = getNeighbors(board, i);
             newBoard[i] = calculateLife(neighbors, board[i]);
-        }   
+        }
 
         return newBoard;
     }
