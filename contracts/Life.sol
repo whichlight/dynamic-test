@@ -71,7 +71,7 @@ contract Life {
         return wrapAround(index - 1);
     }
 
-    function getNeighbors(bool[KEY_LENGTH] board, uint256 index) private view returns (bool[8]) {
+    function getNeighbors(bool[KEY_LENGTH] board, uint64 index) private view returns (bool[8]) {
         return [
             board[rowAbove(index)], // top
             board[rowAbove(colRight(index))], // top right
@@ -96,7 +96,9 @@ contract Life {
         return liveNeighbors;
     }
 
-    function calculateLife(bool[8] neighbors, bool alive) private view returns(bool) {
+    function calculateLife(bool[KEY_LENGTH] board, uint64 index) private view returns(bool) {
+        bool alive = board[index];
+        bool[8] neighbors = getNeighbors(board, index);
         uint8 liveNeighborCount = getLiveNeighborCount(neighbors);
 
         // Any live cell with 2 or 3 live neighbors survives.
@@ -117,9 +119,8 @@ contract Life {
     function calculateNextState(bool[KEY_LENGTH] board) public view returns(bool[KEY_LENGTH]) {
         bool[KEY_LENGTH] newBoard;
 
-        for (uint256 i = 0; i < KEY_LENGTH; i++) {
-            bool[8] neighbors = getNeighbors(board, i);
-            newBoard[i] = calculateLife(neighbors, board[i]);
+        for (uint64 i = 0; i < KEY_LENGTH; i++) {
+            newBoard[i] = calculateLife(board, i);
         }
 
         return newBoard;
