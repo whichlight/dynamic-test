@@ -7,7 +7,8 @@ contract Life {
     // https://solidity-by-example.org/hacks/block-timestamp-manipulation/
     // this is a vulnerability 
     uint256 public bornTime;
-    uint8 BOARD_SIZE = 64;
+    uint8 public BOARD_SIZE = 64;
+    uint64 public KEY_LENGTH = BOARD_SIZE ** 2;
 
     constructor() {
         bornTime = block.timestamp; 
@@ -22,7 +23,7 @@ contract Life {
         uint256 time = block.timestamp - bornTime; 
 
         //0 to 100 
-        uint8 y = mod(time, 100);
+        uint8 y = uint8(time % 100);
         return y;
     }
 
@@ -35,17 +36,70 @@ contract Life {
         return (block.number, block.timestamp);
     }
 
-    function hash(string memory input) public view returns (bytes) {
+    function hash(string memory input) public pure returns (bytes32) {
         return sha256(abi.encodePacked(input));
     }
 
-    function getLiveNeighborCount() {
-        return 3;
+
+    // Conway stuff
+
+    function wrapAround(uint64 index) private view returns (uint64) {
+        if (index < 0) {
+            return index + KEY_LENGTH;
+        }
+
+        if (index >= KEY_LENGTH) {
+            return index - KEY_LENGTH;
+        }
+
+        return index;
     }
- 
-    function calculateLife(bool[9] neighbors) public view returns(bool) {
-        bool memory alive = neighbors[4];
-        uint8 liveNeighborCount = getLiveNeighborCount();
+
+    function rowAbove(uint64 index) private view returns(uint64) {
+        return wrapAround(index + BOARD_SIZE);
+    }
+
+    function rowBelow(uint64 index) private view returns(uint64) {
+        return wrapAround(index - BOARD_SIZE);
+    }
+
+    function colRight(uint64 index) private view returns(uint64) {
+        return wrapAround(index + 1);
+    }
+
+    function colLeft(uint64 index) private view returns(uint64) {
+        return wrapAround(index - 1);
+    }
+
+    function getNeighbors(bool[4096] memory board, uint64 index) private view returns (bool[8] memory) {
+        return [
+            board[rowAbove(index)], // top
+            board[rowAbove(colRight(index))], // top right
+            board[colRight(index)], // right
+            board[rowBelow(colRight(index))], // bottom right
+            board[rowBelow(index)], // bottom
+            board[rowBelow(colLeft(index))], // bottom left
+            board[colLeft(index)], // left
+            board[rowAbove(colLeft(index))] // top left
+        ];
+    }
+
+    function getLiveNeighborCount(bool[8] memory neighbors) private pure returns (uint8) {
+        uint8 liveNeighbors = 0;
+
+        for (uint8 i = 0; i < neighbors.length; i++) {
+            if (neighbors[i]) {
+                liveNeighbors++;
+            }
+        }
+
+        return liveNeighbors;
+    }
+
+    function calculateLife(bool[4096] memory board, uint64 index) private view returns(bool) {
+        bool alive = board[index];
+        bool[8] memory neighbors = getNeighbors(board, index);
+        uint8 liveNeighborCount = getLiveNeighborCount(neighbors);
 
         // Any live cell with 2 or 3 live neighbors survives.
         if (alive) {
@@ -62,57 +116,12 @@ contract Life {
         return false;
     }
 
-    function wrapAround(uint64 index) public view returns (uint64) {
-        if (index < 0) {
-            return index + 4096;
+    function calculateNextState(bool[4096] memory board) public view returns(bool[4096] memory) {
+        bool[4096] memory newBoard;
+
+        for (uint64 i = 0; i < KEY_LENGTH; i++) {
+            newBoard[i] = calculateLife(board, i);
         }
-
-        if (index >= 4096) {
-            return index - 4096;
-        }
-
-        return index;
-    }
-
-
-    function rowAbove(uint64 index) returns(bool) {
-        return wrapAround(index + BOARD_SIZE);
-    }
-
-    function rowBelow(uint64 index) returns(bool) {
-        return wrapAround(index - BOARD_SIZE);
-    }
-
-    function colRight(uint64 index) returns(bool) {
-        return wrapAround(index + 1);
-    }
-
-    function colLeft(uint64 index) returns(bool) {
-        return wrapAround(index - 1);
-    }
-
-
-    function getNeighbors(bool[4096] board, uint256 index) returns (bool[9]) {
-        return [
-            board[rowAbove(index)], // top
-            board[rowAbove(colRight(index))], // top right
-            board[colRight(index)], // right
-            board[rowBelow(colRight(index))], // bottom right
-            board[rowBelow(index)], // bottom
-            board[rowBelow(colLeft(index))], // bottom left
-            board[colLeft(index)], // left
-            board[rowAbove(colLeft(index))] // top left
-        ];
-    }
-
-
-    function calculateNextState(bool[4096] board) public view returns(bool[4096]) {
-        bool[4096] newBoard;
-
-        for (uint256 i = 0; i < 4096; i++) {
-            bool[9] neighbors = getNeighbors(board, i);
-            newBoard[i] = calculateLife(neighbors, board[i]);
-        }   
 
         return newBoard;
     }
